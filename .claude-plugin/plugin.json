@@ -1,0 +1,18 @@
+{
+  "name": "user-manual",
+  "description": "Generate and incrementally maintain a per-project user manual (docs/manual/user-manual.md) plus a self-contained HTML viewer, by reading the project's superpowers artifacts (specs, plans, findings, reviews) and fortifying with web search. Idempotent across runs via SHA256 citation tracking.",
+  "version": "0.1.0",
+  "author": {
+    "name": "photoenthu"
+  },
+  "homepage": "https://github.com/photoenthu/user-manual-skill",
+  "repository": "https://github.com/photoenthu/user-manual-skill",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "documentation",
+    "user-manual",
+    "superpowers",
+    "claude-code"
+  ]
+}

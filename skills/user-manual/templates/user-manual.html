@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Manual</title>
+<!-- user-manual-dashboard-version: 1 -->
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafaf9;
+    --fg: #1c1917;
+    --fg-muted: #57534e;
+    --fg-subtle: #a8a29e;
+    --card: #ffffff;
+    --border: #e7e5e4;
+    --accent: #3b82f6;
+    --accent-soft: #dbeafe;
+    --code-bg: #f5f5f4;
+    --hl: #fef9c3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0a09;
+      --fg: #fafaf9;
+      --fg-muted: #a8a29e;
+      --fg-subtle: #57534e;
+      --card: #1c1917;
+      --border: #292524;
+      --accent-soft: #1e3a8a;
+      --code-bg: #292524;
+      --hl: #422006;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: var(--card);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header .source {
+    font-size: 12px;
+    color: var(--fg-muted);
+    margin-top: 2px;
+  }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  button:hover { border-color: var(--fg-muted); }
+  button.primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  button.primary:hover { filter: brightness(1.1); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 0;
+  }
+  aside.toc {
+    border-right: 1px solid var(--border);
+    padding: 24px 16px 24px 24px;
+    position: sticky;
+    top: 56px;
+    align-self: start;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    font-size: 13px;
+  }
+  aside.toc h2 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--fg-subtle);
+    margin: 0 0 12px;
+  }
+  aside.toc .filter input {
+    font: inherit;
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    margin-bottom: 12px;
+  }
+  aside.toc .filter input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+  aside.toc ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  aside.toc li { margin: 0; }
+  aside.toc a {
+    display: block;
+    padding: 4px 8px;
+    color: var(--fg-muted);
+    text-decoration: none;
+    border-radius: 4px;
+    border-left: 2px solid transparent;
+  }
+  aside.toc a:hover { background: var(--code-bg); color: var(--fg); }
+  aside.toc a.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 500;
+  }
+  aside.toc a.h3 { padding-left: 20px; font-size: 12px; }
+  aside.toc a.h4 { padding-left: 32px; font-size: 12px; color: var(--fg-subtle); }
+  main {
+    padding: 32px 40px;
+    min-width: 0;
+  }
+  article {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  article h1, article h2, article h3, article h4, article h5, article h6 {
+    line-height: 1.3;
+    margin: 1.6em 0 0.6em;
+    font-weight: 600;
+    scroll-margin-top: 72px;
+  }
+  article h1 { font-size: 30px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  article h2 { font-size: 24px; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-top: 2em; }
+  article h3 { font-size: 19px; }
+  article h4 { font-size: 16px; }
+  article h5, article h6 { font-size: 14px; color: var(--fg-muted); }
+  article p { margin: 0 0 1em; }
+  article code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  article pre {
+    background: var(--code-bg);
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 0 0 1em;
+  }
+  article pre code { background: transparent; padding: 0; font-size: 0.85em; }
+  article blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 0 0 1em;
+    padding: 0.4em 1em;
+    color: var(--fg-muted);
+    background: var(--code-bg);
+    border-radius: 0 6px 6px 0;
+  }
+  article ul, article ol { padding-left: 1.6em; margin: 0 0 1em; }
+  article li { margin: 0.2em 0; }
+  article li > ul, article li > ol { margin: 0.2em 0; }
+  article hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+  article table {
+    border-collapse: collapse;
+    margin: 0 0 1em;
+    width: 100%;
+    font-size: 14px;
+    display: block;
+    overflow-x: auto;
+  }
+  article th, article td {
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  article th { background: var(--code-bg); font-weight: 600; }
+  article a { color: var(--accent); text-decoration: none; }
+  article a:hover { text-decoration: underline; }
+  article img { max-width: 100%; border-radius: 6px; }
+  article input[type="checkbox"] { margin-right: 6px; }
+  /* Mermaid / dot blocks: leave as monospaced text but tag them so future
+     enhancements can render them. */
+  article pre code.lang-mermaid, article pre code.lang-dot {
+    color: var(--fg-muted);
+  }
+  .empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: var(--fg-muted);
+  }
+  .empty-state h2 { color: var(--fg); font-weight: 600; }
+  .empty-state .hint { font-size: 13px; margin-top: 8px; }
+  .empty-state .compat {
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--fg-subtle);
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .error {
+    padding: 16px;
+    border-radius: 6px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .error { background: #450a0a; color: #fecaca; }
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside.toc {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+    }
+    main { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>User Manual</h1>
+    <div class="source" id="sourceLabel">No file loaded</div>
+  </div>
+  <div class="actions">
+    <button id="openBtn" class="primary">Open file…</button>
+    <button id="refreshBtn" hidden>Refresh</button>
+    <button id="changeBtn" hidden>Change file</button>
+  </div>
+</header>
+
+<div id="errorBanner" class="error" hidden></div>
+
+<div id="emptyState" class="empty-state">
+  <h2>Select your <code>user-manual.md</code></h2>
+  <p class="hint">Pick the markdown file once and your browser will remember it.</p>
+  <p class="compat">
+    Best in Chrome, Edge, or any Chromium-based browser. In Firefox or Safari the dashboard works
+    but the picker has to be re-opened on every visit (no persistent file handles).
+  </p>
+</div>
+
+<div class="layout" id="dashboard" hidden>
+  <aside class="toc">
+    <h2>Contents</h2>
+    <div class="filter">
+      <input type="search" id="filterInput" placeholder="Filter sections…" autocomplete="off">
+    </div>
+    <ul id="tocList"></ul>
+  </aside>
+  <main>
+    <article id="article"></article>
+  </main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const DB_NAME = "user-manual";
+  const DB_STORE = "handles";
+  const DB_KEY = "current";
+  const DIR_KEY = "rootDir";
+  const LS_NAME = "user-manual:filename";
+
+  const els = {
+    openBtn: document.getElementById("openBtn"),
+    refreshBtn: document.getElementById("refreshBtn"),
+    changeBtn: document.getElementById("changeBtn"),
+    sourceLabel: document.getElementById("sourceLabel"),
+    emptyState: document.getElementById("emptyState"),
+    dashboard: document.getElementById("dashboard"),
+    article: document.getElementById("article"),
+    tocList: document.getElementById("tocList"),
+    filterInput: document.getElementById("filterInput"),
+    errorBanner: document.getElementById("errorBanner"),
+  };
+
+  const supportsFSAccess = "showOpenFilePicker" in window;
+
+  // The dashboard lives at <project>/docs/manual/user-manual.html, so the
+  // project root is two directories up. Relative links in the markdown
+  // (`docs/superpowers/plans/foo.md`) are resolved against this base for
+  // display in the link href; for file:// dashboards we additionally walk a
+  // FileSystemDirectoryHandle to fetch the bytes (next section below).
+  const PROJECT_ROOT = (() => {
+    try { return new URL("../../", window.location.href).href; }
+    catch (_) { return null; }
+  })();
+
+  let projectDirHandle = null;
+
+  // ---------- IndexedDB helpers (for FileSystemFileHandle) ----------
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function dbGet(key) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readonly");
+      const req = tx.objectStore(DB_STORE).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function dbSet(key, value) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function dbDelete(key) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  // ---------- Link handling ----------
+  function isAbsoluteUrl(url) {
+    if (!url) return true;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return true;
+    if (url.startsWith("//") || url.startsWith("#")) return true;
+    return false;
+  }
+  function resolveLinkUrl(url) {
+    if (!url) return url;
+    if (isAbsoluteUrl(url)) return url;
+    if (!PROJECT_ROOT) return url;
+    try { return new URL(url, PROJECT_ROOT).href; }
+    catch (_) { return url; }
+  }
+  function makeAnchorHtml(rawUrl, rawText) {
+    const safeText = escapeHtml(rawText);
+    if (!rawUrl) return safeText;
+    if (rawUrl.startsWith("#")) {
+      // In-page anchor — for navigation between sections of the manual.
+      return `<a href="${escapeHtml(rawUrl)}">${safeText}</a>`;
+    }
+    if (isAbsoluteUrl(rawUrl)) {
+      return `<a href="${escapeHtml(rawUrl)}" target="_blank" rel="noopener">${safeText}</a>`;
+    }
+    const fallback = resolveLinkUrl(rawUrl);
+    // data-rel-href lets a delegated click handler fetch the file via the
+    // project-root directory handle and open it in a new window — bypasses
+    // the file:// → file:// navigation block in Chromium.
+    return `<a href="${escapeHtml(fallback)}" data-rel-href="${escapeHtml(rawUrl)}" target="_blank" rel="noopener">${safeText}</a>`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
+  // ---------- Heading anchors ----------
+  // Slug used for both the heading id and the TOC anchor href. Mirrors the
+  // common GitHub-style "lowercase, strip punctuation, dashes for spaces"
+  // algorithm; not 100% identical to GitHub's but stable within this
+  // document. Slug uniqueness is per-render (a fresh counts Map is passed
+  // through the render so two simultaneous renders — main page + popup —
+  // don't interfere).
+  function makeSlugger() {
+    const counts = new Map();
+    return function slugify(text) {
+      let base = String(text).toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+      if (!base) base = "section";
+      const seen = counts.get(base) || 0;
+      counts.set(base, seen + 1);
+      return seen === 0 ? base : `${base}-${seen}`;
+    };
+  }
+
+  // ---------- Markdown rendering ----------
+  // Block-level Markdown → HTML renderer aimed at typical user-manual
+  // content (headings, paragraphs, lists, fenced code, GFM tables,
+  // blockquotes, hr, inline code/bold/italic/links/images). Not
+  // CommonMark-strict; intentionally small and self-contained.
+
+  function renderInlineMd(text) {
+    // Pull out code spans, images, and links before HTML-escaping so the
+    // URLs and code bodies don't get double-escaped (e.g. & in a query
+    // string becoming &amp;amp;).
+    const codes = [];
+    const links = [];
+    const images = [];
+    let s = text
+      .replace(/`([^`]+)`/g, (_, code) => {
+        codes.push(code);
+        return `IC${codes.length - 1}`;
+      })
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => {
+        images.push({ alt, url });
+        return `IM${images.length - 1}`;
+      })
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, txt, url) => {
+        links.push({ txt, url });
+        return `LK${links.length - 1}`;
+      });
+    s = escapeHtml(s);
+    // Bold first so the inner * doesn't get eaten by the italic regex.
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/__([^_\n]+)__/g, "<strong>$1</strong>");
+    s = s.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>");
+    s = s.replace(/(^|[\s(])_([^_\n]+)_(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>");
+    s = s.replace(/~~([^~\n]+)~~/g, "<del>$1</del>");
+    // Restore placeholders. The  sentinels survive escapeHtml unchanged.
+    s = s.replace(/IM(\d+)/g, (_, i) => {
+      const { alt, url } = images[+i];
+      const resolved = isAbsoluteUrl(url) ? url : resolveLinkUrl(url);
+      return `<img alt="${escapeHtml(alt)}" src="${escapeHtml(resolved)}">`;
+    });
+    s = s.replace(/LK(\d+)/g, (_, i) => makeAnchorHtml(links[+i].url, links[+i].txt));
+    s = s.replace(/IC(\d+)/g, (_, i) => `<code>${escapeHtml(codes[+i])}</code>`);
+    return s;
+  }
+
+  function splitMarkdownTableRow(line) {
+    const cells = [];
+    let buf = "";
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === "\\" && line[i + 1] === "|") { buf += "|"; i++; continue; }
+      if (c === "|") { cells.push(buf); buf = ""; continue; }
+      buf += c;
+    }
+    cells.push(buf);
+    if (cells.length && cells[0].trim() === "") cells.shift();
+    if (cells.length && cells[cells.length - 1].trim() === "") cells.pop();
+    return cells.map((s) => s.trim());
+  }
+
+  function renderMdTable(lines) {
+    const header = splitMarkdownTableRow(lines[0]);
+    const body = lines.slice(2).map(splitMarkdownTableRow);
+    let html = "<table><thead><tr>";
+    for (const h of header) html += `<th>${renderInlineMd(h)}</th>`;
+    html += "</tr></thead><tbody>";
+    for (const row of body) {
+      html += "<tr>";
+      for (let i = 0; i < header.length; i++) {
+        html += `<td>${renderInlineMd(row[i] || "")}</td>`;
+      }
+      html += "</tr>";
+    }
+    html += "</tbody></table>";
+    return html;
+  }
+
+  function renderMdList(lines, ordered) {
+    const re = ordered ? /^(\s*)\d+\.\s+(.*)$/ : /^(\s*)[-*+]\s+(.*)$/;
+    const items = [];
+    let baseIndent = null;
+    for (const line of lines) {
+      if (line.trim() === "") {
+        if (items.length) items[items.length - 1] += "\n";
+        continue;
+      }
+      const m = line.match(re);
+      if (m && (baseIndent === null || m[1].length === baseIndent)) {
+        if (baseIndent === null) baseIndent = m[1].length;
+        const body = m[2].replace(/^\[([ xX])\]\s+/, (_, ch) => {
+          const checked = ch.toLowerCase() === "x";
+          return `<input type="checkbox" disabled${checked ? " checked" : ""}> `;
+        });
+        items.push(body);
+      } else if (items.length) {
+        items[items.length - 1] += "\n" + line;
+      }
+    }
+    const tag = ordered ? "ol" : "ul";
+    const renderItem = (raw) => {
+      const sub = raw.split("\n");
+      const lead = sub[0];
+      const rest = sub.slice(1);
+      const isListLine = (l) => /^\s*[-*+]\s+/.test(l) || /^\s*\d+\.\s+/.test(l);
+      const nestedStart = rest.findIndex((l) => isListLine(l) && /^\s+/.test(l));
+      if (nestedStart === -1) {
+        return `<li>${renderInlineMd(raw.replace(/\n/g, " "))}</li>`;
+      }
+      const head = [lead, ...rest.slice(0, nestedStart)].filter(Boolean).join(" ");
+      const nested = rest.slice(nestedStart);
+      const nestedOrdered = /^\s*\d+\.\s+/.test(nested[0]);
+      return `<li>${renderInlineMd(head)}${renderMdList(nested, nestedOrdered)}</li>`;
+    };
+    return `<${tag}>${items.map(renderItem).join("")}</${tag}>`;
+  }
+
+  // Each render builds a fresh ctx ({ slugify, headings, assignIds }) and
+  // threads it through. Concurrent renders (main + popup) don't interfere
+  // because there's no module-level state.
+  function renderMdBlock(block, ctx) {
+    if (!block.trim()) return "";
+    if (/^FENCE\d+$/.test(block.trim())) return block.trim();
+    const lines = block.split("\n");
+    const first = lines[0];
+    const heading = first.match(/^(#{1,6})\s+(.*?)\s*#*\s*$/);
+    if (heading && lines.length === 1) {
+      const level = heading[1].length;
+      const rawText = heading[2];
+      const id = ctx.assignIds ? ctx.slugify(rawText) : "";
+      ctx.headings.push({ level, text: rawText, id });
+      const idAttr = id ? ` id="${id}"` : "";
+      return `<h${level}${idAttr}>${renderInlineMd(rawText)}</h${level}>`;
+    }
+    if (lines.length === 1 && /^\s*([-*_])\s*\1\s*\1[-*_\s]*$/.test(first)) {
+      return "<hr>";
+    }
+    if (lines.every((l) => /^>\s?/.test(l) || l.trim() === "")) {
+      const inner = lines.map((l) => l.replace(/^>\s?/, "")).join("\n");
+      return `<blockquote>${renderMdBlocks(inner, ctx)}</blockquote>`;
+    }
+    if (lines.length >= 2 && /\|/.test(lines[0]) &&
+        /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[1]) && /-/.test(lines[1])) {
+      return renderMdTable(lines);
+    }
+    if (lines.every((l) => /^\s*[-*+]\s+/.test(l) || /^\s+\S/.test(l) || l.trim() === "")) {
+      return renderMdList(lines, false);
+    }
+    if (lines.every((l) => /^\s*\d+\.\s+/.test(l) || /^\s+\S/.test(l) || l.trim() === "")) {
+      return renderMdList(lines, true);
+    }
+    return `<p>${renderInlineMd(lines.join(" "))}</p>`;
+  }
+
+  function renderMdBlocks(text, ctx) {
+    // Extract fenced code blocks first so internal blank lines don't split them.
+    const fences = [];
+    const stripped = text.replace(/```([^\n]*)\n([\s\S]*?)```/g, (_, lang, body) => {
+      fences.push({ lang: lang.trim(), body: body.replace(/\n$/, "") });
+      return `FENCE${fences.length - 1}`;
+    });
+    const blocks = stripped.split(/\n{2,}/);
+    let html = blocks.map((b) => renderMdBlock(b.replace(/\s+$/, ""), ctx)).filter(Boolean).join("\n");
+    html = html.replace(/FENCE(\d+)/g, (_, i) => {
+      const { lang, body } = fences[+i];
+      const cls = lang ? ` class="lang-${escapeHtml(lang)}"` : "";
+      return `<pre><code${cls}>${escapeHtml(body)}</code></pre>`;
+    });
+    return html;
+  }
+
+  function renderManualMarkdown(md, { assignIds = true } = {}) {
+    const ctx = { assignIds, slugify: makeSlugger(), headings: [] };
+    const html = renderMdBlocks(md, ctx);
+    return { html, headings: ctx.headings };
+  }
+
+  // ---------- TOC sidebar ----------
+  function renderToc(headings) {
+    // Show H2 / H3 / H4 — skip H1 (it's the document title, already shown
+    // in the header) and skip H5/H6 (too granular for the sidebar).
+    const items = headings.filter((h) => h.level >= 2 && h.level <= 4);
+    if (items.length === 0) {
+      els.tocList.innerHTML = `<li><span style="color: var(--fg-subtle); font-size: 12px; padding: 4px 8px; display: block;">No headings found</span></li>`;
+      return;
+    }
+    els.tocList.innerHTML = items.map((h) =>
+      `<li><a href="#${h.id}" class="h${h.level}" data-toc-id="${h.id}">${escapeHtml(h.text)}</a></li>`
+    ).join("");
+  }
+
+  function setupTocFiltering() {
+    els.filterInput.addEventListener("input", () => {
+      const q = els.filterInput.value.trim().toLowerCase();
+      const lis = els.tocList.querySelectorAll("li");
+      lis.forEach((li) => {
+        const a = li.querySelector("a");
+        if (!a) return;
+        const text = a.textContent.toLowerCase();
+        li.style.display = !q || text.includes(q) ? "" : "none";
+      });
+    });
+  }
+
+  function setupTocActiveTracking() {
+    // IntersectionObserver picks the heading currently nearest the top of
+    // the viewport and highlights its TOC entry. Cheap, no scroll handler.
+    const headingEls = els.article.querySelectorAll("h2, h3, h4");
+    if (!headingEls.length) return;
+    const tocLinks = new Map();
+    els.tocList.querySelectorAll("a[data-toc-id]").forEach((a) => {
+      tocLinks.set(a.dataset.tocId, a);
+    });
+    let active = null;
+    const setActive = (id) => {
+      if (active === id) return;
+      if (active && tocLinks.get(active)) tocLinks.get(active).classList.remove("active");
+      active = id;
+      if (id && tocLinks.get(id)) tocLinks.get(id).classList.add("active");
+    };
+    const visible = new Map();
+    const obs = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) visible.set(e.target.id, e.boundingClientRect.top);
+        else visible.delete(e.target.id);
+      }
+      if (visible.size === 0) return;
+      // Pick the visible heading closest to the top of the viewport.
+      let bestId = null, bestTop = Infinity;
+      for (const [id, top] of visible) {
+        if (top >= 0 && top < bestTop) { bestId = id; bestTop = top; }
+      }
+      if (bestId) setActive(bestId);
+    }, { rootMargin: "-72px 0px -60% 0px" });
+    headingEls.forEach((h) => obs.observe(h));
+  }
+
+  // ---------- In-place file open via FileSystemDirectoryHandle ----------
+  // Chrome blocks <a href="file://..."> navigation from a file:// dashboard.
+  // To open superpowers artifacts in a new window without re-prompting on
+  // every click, the user grants a one-time directory handle for the
+  // project root; we walk it to the linked file, read bytes, and open them
+  // as a Blob URL. Non-Chromium browsers fall through to the plain anchor.
+
+  async function walkToFile(rootHandle, relPath) {
+    const segments = relPath.split("/").filter((s) => s && s !== ".");
+    let current = rootHandle;
+    for (let i = 0; i < segments.length - 1; i++) {
+      current = await current.getDirectoryHandle(segments[i]);
+    }
+    return current.getFileHandle(segments[segments.length - 1]);
+  }
+
+  // Same minimal markdown renderer for the popup — re-uses the document's
+  // renderer inside a self-contained HTML payload.
+  function buildArtifactViewerHtml(filename, body, isMarkdown) {
+    const safeTitle = escapeHtml(filename);
+    let mainHtml;
+    if (isMarkdown) {
+      // We're inside the same JS context, so run the renderer directly.
+      // assignIds=false: the popup has no TOC, so heading anchors are noise.
+      mainHtml = renderManualMarkdown(body, { assignIds: false }).html;
+    } else {
+      mainHtml = `<pre>${escapeHtml(body)}</pre>`;
+    }
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">` +
+      `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+      `<title>${safeTitle}</title><base target="_blank">` +
+      `<style>` +
+      `body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 15px; line-height: 1.6; color: #1c1917; background: #fafaf9; max-width: 820px; margin: 0 auto; padding: 32px; }` +
+      `@media (prefers-color-scheme: dark) { body { color: #fafaf9; background: #0c0a09; } }` +
+      `.viewer-header { font-family: ui-monospace, monospace; font-size: 12px; color: #57534e; padding-bottom: 12px; border-bottom: 1px solid #e7e5e4; margin-bottom: 24px; }` +
+      `h1, h2, h3, h4 { line-height: 1.3; font-weight: 600; }` +
+      `code { font-family: ui-monospace, monospace; font-size: 0.88em; background: #f5f5f4; padding: 1px 6px; border-radius: 4px; }` +
+      `@media (prefers-color-scheme: dark) { code { background: #292524; } }` +
+      `pre { background: #f5f5f4; padding: 14px 16px; border-radius: 8px; overflow-x: auto; }` +
+      `@media (prefers-color-scheme: dark) { pre { background: #292524; } }` +
+      `pre code { background: transparent; padding: 0; }` +
+      `table { border-collapse: collapse; width: 100%; }` +
+      `th, td { border: 1px solid #e7e5e4; padding: 6px 12px; text-align: left; vertical-align: top; }` +
+      `th { background: #f5f5f4; }` +
+      `a { color: #3b82f6; text-decoration: none; }` +
+      `a:hover { text-decoration: underline; }` +
+      `img { max-width: 100%; }` +
+      `</style></head><body>` +
+      `<div class="viewer-header">${safeTitle}</div>` +
+      `${mainHtml}</body></html>`;
+  }
+
+  function openArtifactInNewWindow(filename, text) {
+    const isMd = /\.(md|markdown)$/i.test(filename);
+    const payload = isMd ? buildArtifactViewerHtml(filename, text, true) : text;
+    const type = isMd ? "text/html;charset=utf-8" : "text/plain;charset=utf-8";
+    const blob = new Blob([payload], { type });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank");
+    if (!win) showError("Pop-up was blocked. Allow pop-ups for this page to view files.");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+
+  async function ensurePermission(handle) {
+    const opts = { mode: "read" };
+    if ((await handle.queryPermission(opts)) === "granted") return true;
+    if ((await handle.requestPermission(opts)) === "granted") return true;
+    return false;
+  }
+
+  async function handleArtifactLinkClick(e) {
+    if (!supportsFSAccess) return;
+    const a = e.target.closest && e.target.closest("a[data-rel-href]");
+    if (!a) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    const rel = a.dataset.relHref;
+    if (!rel) return;
+    e.preventDefault();
+    try {
+      if (!projectDirHandle) {
+        projectDirHandle = await window.showDirectoryPicker({
+          id: "user-manual-root",
+          mode: "read",
+        });
+        dbSet(DIR_KEY, projectDirHandle).catch(() => {});
+      } else if (!(await ensurePermission(projectDirHandle))) {
+        showError("Permission to read the project root was denied.");
+        return;
+      }
+      const fileHandle = await walkToFile(projectDirHandle, rel);
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      openArtifactInNewWindow(file.name, text);
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      showError(`Could not open ${rel}: ${err && err.message ? err.message : err}`);
+    }
+  }
+
+  // ---------- Rendering ----------
+  let lastMarkdown = "";
+
+  function showError(msg) {
+    els.errorBanner.textContent = msg;
+    els.errorBanner.hidden = false;
+  }
+  function clearError() {
+    els.errorBanner.hidden = true;
+    els.errorBanner.textContent = "";
+  }
+
+  function showDashboard(filename) {
+    els.emptyState.hidden = true;
+    els.dashboard.hidden = false;
+    els.openBtn.hidden = true;
+    els.refreshBtn.hidden = false;
+    els.changeBtn.hidden = false;
+    els.sourceLabel.textContent = filename ? `Source: ${filename}` : "Source loaded";
+  }
+
+  function showEmpty() {
+    els.emptyState.hidden = false;
+    els.dashboard.hidden = true;
+    els.openBtn.hidden = false;
+    els.refreshBtn.hidden = true;
+    els.changeBtn.hidden = true;
+    els.sourceLabel.textContent = "No file loaded";
+  }
+
+  function renderManual(md, name) {
+    lastMarkdown = md;
+    const { html, headings } = renderManualMarkdown(md);
+    els.article.innerHTML = html;
+    renderToc(headings);
+    setupTocActiveTracking();
+    showDashboard(name);
+  }
+
+  // ---------- File reading paths ----------
+  async function readFromHandle(handle) {
+    if (!(await ensurePermission(handle))) {
+      throw new Error("Permission to read the file was not granted.");
+    }
+    const file = await handle.getFile();
+    const text = await file.text();
+    return { text, name: file.name };
+  }
+
+  async function loadAndRenderFromHandle(handle) {
+    try {
+      clearError();
+      const { text, name } = await readFromHandle(handle);
+      renderManual(text, name);
+      localStorage.setItem(LS_NAME, name);
+    } catch (e) {
+      showError(`Could not read file: ${e.message}`);
+    }
+  }
+
+  async function pickAndLoad() {
+    if (supportsFSAccess) {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          multiple: false,
+          types: [{ description: "Markdown", accept: { "text/markdown": [".md", ".markdown"] } }],
+          excludeAcceptAllOption: false,
+        });
+        await dbSet(DB_KEY, handle);
+        await loadAndRenderFromHandle(handle);
+      } catch (e) {
+        if (e.name !== "AbortError") showError(`Could not open file: ${e.message}`);
+      }
+    } else {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".md,.markdown,text/markdown";
+      input.onchange = async () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const text = await file.text();
+        renderManual(text, file.name);
+        localStorage.setItem(LS_NAME, file.name);
+      };
+      input.click();
+    }
+  }
+
+  async function tryRestoreSession() {
+    if (!supportsFSAccess) {
+      const lastName = localStorage.getItem(LS_NAME);
+      if (lastName) els.sourceLabel.textContent = `Last opened: ${lastName} (re-open to refresh)`;
+      return;
+    }
+    try {
+      const handle = await dbGet(DB_KEY);
+      if (!handle) return;
+      const opts = { mode: "read" };
+      const state = await handle.queryPermission(opts);
+      if (state === "granted") {
+        await loadAndRenderFromHandle(handle);
+      } else {
+        const lastName = localStorage.getItem(LS_NAME) || "your previous file";
+        els.openBtn.textContent = `Open ${lastName}`;
+        els.sourceLabel.textContent = `Click to reopen ${lastName}`;
+      }
+    } catch (e) {
+      console.warn("Session restore skipped:", e);
+    }
+    try {
+      const dir = await dbGet(DIR_KEY);
+      if (dir) projectDirHandle = dir;
+    } catch (e) {
+      console.warn("Directory handle restore skipped:", e);
+    }
+  }
+
+  // ---------- Wire up ----------
+  els.openBtn.addEventListener("click", pickAndLoad);
+  els.changeBtn.addEventListener("click", async () => {
+    await dbDelete(DB_KEY);
+    await dbDelete(DIR_KEY);
+    projectDirHandle = null;
+    localStorage.removeItem(LS_NAME);
+    await pickAndLoad();
+  });
+  document.addEventListener("click", handleArtifactLinkClick);
+  els.refreshBtn.addEventListener("click", async () => {
+    if (!supportsFSAccess) {
+      await pickAndLoad();
+      return;
+    }
+    const handle = await dbGet(DB_KEY);
+    if (!handle) return pickAndLoad();
+    await loadAndRenderFromHandle(handle);
+  });
+  setupTocFiltering();
+
+  tryRestoreSession();
+})();
+</script>
+</body>
+</html>

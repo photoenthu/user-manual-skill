@@ -1,0 +1,22 @@
+{
+  "name": "user-manual-skill",
+  "owner": {
+    "name": "photoenthu"
+  },
+  "metadata": {
+    "description": "Single-skill marketplace: generate and maintain a per-project user manual (and HTML viewer) from the project's superpowers artifacts. Idempotent across runs.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "user-manual",
+      "source": {
+        "source": "github",
+        "repo": "photoenthu/user-manual-skill"
+      },
+      "description": "Reads docs/superpowers/{specs,plans,findings,reviews}/*.md, synthesizes a novice-friendly user manual at docs/manual/user-manual.md (Quick Start, Glossary, Daily Usage, Configuration, Troubleshooting, Architecture), tracks every cited artifact's content hash for idempotent reruns, and bootstraps a self-contained HTML viewer with a sticky TOC sidebar.",
+      "version": "0.1.0",
+      "strict": true
+    }
+  ]
+}
