@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>User Manual</title>
-<!-- user-manual-dashboard-version: 1 -->
+<!-- user-manual-dashboard-version: 2 -->
 <style>
   :root {
     color-scheme: light dark;
@@ -319,15 +319,38 @@
 
   const supportsFSAccess = "showOpenFilePicker" in window;
 
-  // The dashboard lives at <project>/docs/manual/user-manual.html, so the
-  // project root is two directories up. Relative links in the markdown
-  // (`docs/superpowers/plans/foo.md`) are resolved against this base for
-  // display in the link href; for file:// dashboards we additionally walk a
-  // FileSystemDirectoryHandle to fetch the bytes (next section below).
-  const PROJECT_ROOT = (() => {
-    try { return new URL("../../", window.location.href).href; }
+  // The viewer lives at <project>/docs/manual/user-manual.html and reads
+  // <project>/docs/manual/user-manual.md (same directory). Relative links
+  // inside the markdown follow the **standard markdown convention**: they're
+  // relative to the .md file itself (so `../superpowers/specs/foo.md` from a
+  // doc at `docs/manual/user-manual.md` resolves to `docs/superpowers/...`).
+  // We compute two URLs so we can both:
+  //   * build a working `<a href>` for the browser fallback path
+  //   * convert any relative link back into a project-root-relative path
+  //     for the FileSystemDirectoryHandle walk
+  const MD_DIR_URL = (() => {
+    try { return new URL("./", window.location.href); }
     catch (_) { return null; }
   })();
+  const PROJECT_ROOT_URL = (() => {
+    try { return new URL("../../", window.location.href); }
+    catch (_) { return null; }
+  })();
+  const PROJECT_ROOT = PROJECT_ROOT_URL ? PROJECT_ROOT_URL.href : null;
+
+  // Given a relative link as written in the markdown (e.g.
+  // `../superpowers/specs/foo.md`), produce the path *relative to the
+  // project root* — what `walkToFile` expects. Returns the original
+  // string if the URL math fails or escapes the project root (defensive).
+  function relPathFromProjectRoot(relUrl) {
+    if (!MD_DIR_URL || !PROJECT_ROOT_URL) return relUrl;
+    try {
+      const absolute = new URL(relUrl, MD_DIR_URL);
+      const root = PROJECT_ROOT_URL.href;
+      if (!absolute.href.startsWith(root)) return relUrl;
+      return absolute.href.slice(root.length);
+    } catch (_) { return relUrl; }
+  }
 
   let projectDirHandle = null;
 
@@ -378,8 +401,11 @@
   function resolveLinkUrl(url) {
     if (!url) return url;
     if (isAbsoluteUrl(url)) return url;
-    if (!PROJECT_ROOT) return url;
-    try { return new URL(url, PROJECT_ROOT).href; }
+    if (!MD_DIR_URL) return url;
+    // Resolve against the markdown file's directory — standard markdown
+    // convention. `../superpowers/specs/foo.md` from `docs/manual/foo.md`
+    // becomes `<project_root>/docs/superpowers/specs/foo.md`.
+    try { return new URL(url, MD_DIR_URL).href; }
     catch (_) { return url; }
   }
   function makeAnchorHtml(rawUrl, rawText) {
@@ -751,7 +777,10 @@
         showError("Permission to read the project root was denied.");
         return;
       }
-      const fileHandle = await walkToFile(projectDirHandle, rel);
+      // Convert the markdown-file-relative path to a project-root-relative
+      // one before walking the directory tree.
+      const projectRel = relPathFromProjectRoot(rel);
+      const fileHandle = await walkToFile(projectDirHandle, projectRel);
       const file = await fileHandle.getFile();
       const text = await file.text();
       openArtifactInNewWindow(file.name, text);

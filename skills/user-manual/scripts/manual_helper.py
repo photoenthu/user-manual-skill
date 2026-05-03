@@ -208,6 +208,39 @@ def _is_separator_row(cells: list[str]) -> bool:
     return bool(cells) and all(re.match(r"^:?-+:?$", c) for c in cells)
 
 
+def _normalize_artifact_path(raw_path: str, manual_md_path: Path) -> str:
+    """Citation rows can carry either project-root-relative
+    (`docs/superpowers/...`) or markdown-file-relative (`../superpowers/...`)
+    paths — both are legitimate in different markdown rendering contexts.
+    For the diff/idempotency machinery, everything must come back as
+    project-root-relative so it lines up with `scan_artifacts`.
+
+    Strategy: if `raw_path` is already a forward-slash path that starts with
+    `docs/` or another known top-level directory, return it as-is; otherwise
+    resolve it against the manual's directory and re-express it relative to
+    the manual's grandparent (the project root, since the manual lives at
+    `docs/manual/user-manual.md` by convention)."""
+    if not raw_path or raw_path.startswith(("http://", "https://", "/", "#")):
+        return raw_path
+    if "://" in raw_path:
+        return raw_path
+    # Heuristic: a project-root-relative path starts with a top-level dir
+    # name and never contains `..`. Pass it through untouched.
+    if not raw_path.startswith(("./", "../")) and ".." not in raw_path.split("/"):
+        return raw_path
+    # File-relative — resolve against the manual's directory and re-base
+    # on the project root.
+    try:
+        md_dir = manual_md_path.resolve().parent
+        # The manual lives at <root>/docs/manual/user-manual.md, so project
+        # root is two parents up from the .md file.
+        project_root = md_dir.parent.parent
+        absolute = (md_dir / raw_path).resolve()
+        return absolute.relative_to(project_root).as_posix()
+    except (OSError, ValueError):
+        return raw_path
+
+
 def parse_citations(path: Path) -> dict:
     """Read the existing manual and pull out:
         {
@@ -215,7 +248,9 @@ def parse_citations(path: Path) -> dict:
           "external":  [{url, title, section, last_fetched}, ...]
         }
     Returns empty lists for both if the file is missing or the Citations
-    section isn't there yet (e.g., scaffold-only manual)."""
+    section isn't there yet (e.g., scaffold-only manual). All artifact
+    paths are normalized to project-root-relative regardless of whether
+    they were stored project-root-relative or markdown-file-relative."""
     result = {"artifacts": [], "external": []}
     if not path.exists():
         return result
@@ -271,10 +306,12 @@ def parse_citations(path: Path) -> dict:
         # the bare path. Prefer the link target when present.
         m = re.match(r"^\[(?P<label>[^\]]+)\]\((?P<target>[^)]+)\)$", path_cell)
         bare_path = m.group("target") if m else path_cell
+        # Normalize either link convention back to project-root-relative.
+        normalized = _normalize_artifact_path(bare_path, path)
         # The hash cell may be wrapped in inline-code backticks — strip them.
         bare_hash = hash_cell.strip("`")
         result["artifacts"].append({
-            "path": bare_path,
+            "path": normalized,
             "kind": kind_cell,
             "title": title_cell,
             "hash": bare_hash,
