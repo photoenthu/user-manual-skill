@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>User Manual</title>
-<!-- user-manual-dashboard-version: 3 -->
+<!-- user-manual-dashboard-version: 4 -->
 <style>
   :root {
     color-scheme: light dark;
@@ -807,13 +807,39 @@
   // div that's already attached to the live document. No new window, no
   // navigation, no popup permission required.
 
+  // Walks `rootHandle` segment-by-segment, surfacing *which* segment fell
+  // off the directory tree. The native NotFoundError just says "file does
+  // not exist" with no path, which makes "wrong project root" debugging
+  // miserable. Throws a custom Error with a useful .message on failure.
   async function walkToFile(rootHandle, relPath) {
     const segments = relPath.split("/").filter((s) => s && s !== ".");
     let current = rootHandle;
     for (let i = 0; i < segments.length - 1; i++) {
-      current = await current.getDirectoryHandle(segments[i]);
+      try {
+        current = await current.getDirectoryHandle(segments[i]);
+      } catch (err) {
+        const traversed = segments.slice(0, i).join("/") || "(root)";
+        throw new Error(
+          `couldn't find subfolder "${segments[i]}" inside "${rootHandle.name}/${traversed}"`
+        );
+      }
     }
-    return current.getFileHandle(segments[segments.length - 1]);
+    try {
+      return await current.getFileHandle(segments[segments.length - 1]);
+    } catch (err) {
+      const dir = segments.slice(0, -1).join("/");
+      throw new Error(
+        `couldn't find file "${segments[segments.length - 1]}" inside "${rootHandle.name}/${dir}"`
+      );
+    }
+  }
+
+  // Try to walk a path; return the file handle on success or null on any
+  // failure. Used for non-throwing validation (e.g. "is this directory
+  // the project root?").
+  async function tryWalkToFile(rootHandle, relPath) {
+    try { return await walkToFile(rootHandle, relPath); }
+    catch (_) { return null; }
   }
 
   async function ensurePermission(handle) {
@@ -862,20 +888,43 @@
       showToast("Inline file open isn't available in this browser. Use Chrome/Edge/Brave for click-through to artifacts.", "error");
       return;
     }
-    // Show the modal IMMEDIATELY with a loading state so the user sees
-    // feedback even while the directory picker is open.
+    // Show the modal IMMEDIATELY so the user sees feedback. If a directory
+    // picker is about to open, the message tells them what to pick — this
+    // is critical because the OS picker has no caption / prompt of its own.
     const filename = rel.split("/").pop() || rel;
-    showModal(filename, `<div class="modal-loading">Loading ${escapeHtml(rel)}…</div>`);
+    const willPrompt = !projectDirHandle;
+    const initial = willPrompt
+      ? `<div class="modal-loading">
+           <p style="font-size:15px; margin:0 0 12px;">Pick the <strong>project root folder</strong> in the dialog that's about to open.</p>
+           <p style="font-size:13px; margin:0 0 4px;">For this manual, that's the folder containing <code>docs/</code> — typically the project's git-root.</p>
+           <p style="font-size:13px; margin:0; color:var(--fg-subtle);">Then ${escapeHtml(rel)} will load below.</p>
+         </div>`
+      : `<div class="modal-loading">Loading ${escapeHtml(rel)}…</div>`;
+    showModal(filename, initial);
 
     try {
       if (!projectDirHandle) {
         // showDirectoryPicker requires a user gesture; we're still in one
         // because the click handler called us synchronously.
-        projectDirHandle = await window.showDirectoryPicker({
+        const picked = await window.showDirectoryPicker({
           id: "user-manual-root",
           mode: "read",
         });
+        // Validate the pick — same check as the explicit "Set project
+        // root" button, so a wrong pick fails fast with a useful message
+        // rather than after a confusing walkToFile error.
+        const probe = await tryWalkToFile(picked, "docs/manual/user-manual.md");
+        if (!probe) {
+          closeModal();
+          showToast(
+            `"${picked.name}" doesn't look like the project root — couldn't find docs/manual/user-manual.md inside it. Click "Set project root" in the header and pick the folder that *contains* docs/.`,
+            "error",
+          );
+          return;
+        }
+        projectDirHandle = picked;
         dbSet(DIR_KEY, projectDirHandle).catch(() => {});
+        updateProjectRootLabel();
       } else if (!(await ensurePermission(projectDirHandle))) {
         closeModal();
         showToast("Permission to read the project root was denied.", "error");
@@ -885,7 +934,6 @@
       const fileHandle = await walkToFile(projectDirHandle, projectRel);
       const file = await fileHandle.getFile();
       const text = await file.text();
-      // Replace the loading state with the rendered artifact.
       els.modalTitle.textContent = file.name;
       els.modalBody.innerHTML = renderArtifactBody(file.name, text);
       els.modalBody.scrollTop = 0;
@@ -893,7 +941,10 @@
       closeModal();
       if (err && err.name === "AbortError") return;  // user closed the dir picker
       const msg = err && err.message ? err.message : String(err);
-      showToast(`Could not open ${rel}: ${msg}`, "error");
+      // The walkToFile errors already include the picked-root name and
+      // the failing segment — surface them verbatim instead of wrapping
+      // in another generic prefix that would obscure the detail.
+      showToast(`Couldn't open ${rel} — ${msg}.`, "error");
     }
   }
 
@@ -917,22 +968,52 @@
 
   // Pre-authorize the project root via a button so the first artifact
   // click doesn't pause for a directory picker. Optional — clicks still
-  // work without it; this is a UX nicety.
+  // work without it; this is a UX nicety. Validates the pick by checking
+  // that `docs/manual/user-manual.md` actually lives inside it; bad
+  // picks (e.g., picking `docs/manual/` itself instead of the project
+  // root) show a clear corrective toast instead of silently saving a
+  // useless handle.
   async function pickProjectRoot() {
     if (!supportsFSAccess) {
       showToast("Project-root picking isn't available in this browser.", "error");
       return;
     }
+    let handle;
     try {
-      projectDirHandle = await window.showDirectoryPicker({
+      handle = await window.showDirectoryPicker({
         id: "user-manual-root",
         mode: "read",
       });
-      await dbSet(DIR_KEY, projectDirHandle);
-      showToast("Project root saved. Cited artifacts will open instantly on click.", "info");
     } catch (err) {
       if (err && err.name === "AbortError") return;
-      showToast(`Could not set project root: ${err && err.message ? err.message : err}`, "error");
+      showToast(`Could not open the directory picker: ${err && err.message ? err.message : err}`, "error");
+      return;
+    }
+    // Validate: the manual lives at <root>/docs/manual/user-manual.md by
+    // skill convention. If we can walk to it, this is the right root.
+    const probe = await tryWalkToFile(handle, "docs/manual/user-manual.md");
+    if (!probe) {
+      showToast(
+        `"${handle.name}" doesn't look like the project root — couldn't find docs/manual/user-manual.md inside it. Try again, picking the folder that *contains* docs/.`,
+        "error",
+      );
+      return;
+    }
+    projectDirHandle = handle;
+    await dbSet(DIR_KEY, projectDirHandle);
+    updateProjectRootLabel();
+    showToast(`Project root set to "${handle.name}". Cited artifacts will open instantly on click.`, "info");
+  }
+
+  // Reflect the current project-root state in the header button so the
+  // user can tell whether they've authorized one (and which one).
+  function updateProjectRootLabel() {
+    if (projectDirHandle && projectDirHandle.name) {
+      els.rootBtn.textContent = `Root: ${projectDirHandle.name}`;
+      els.rootBtn.title = "Click to re-pick the project root.";
+    } else {
+      els.rootBtn.textContent = "Set project root";
+      els.rootBtn.title = "Pre-authorize project-root access so cited artifacts open instantly on click.";
     }
   }
 
@@ -1050,7 +1131,27 @@
     }
     try {
       const dir = await dbGet(DIR_KEY);
-      if (dir) projectDirHandle = dir;
+      if (dir) {
+        // Validate the restored handle still looks like a project root
+        // (has docs/manual/user-manual.md inside it). A previously-saved
+        // wrong pick would otherwise sit there silently breaking every
+        // subsequent click.
+        const queryState = await dir.queryPermission({ mode: "read" });
+        if (queryState === "granted") {
+          const probe = await tryWalkToFile(dir, "docs/manual/user-manual.md");
+          if (probe) {
+            projectDirHandle = dir;
+            updateProjectRootLabel();
+          } else {
+            // Stale / wrong-directory handle — drop it.
+            await dbDelete(DIR_KEY).catch(() => {});
+          }
+        } else {
+          // Permission not yet granted; keep the handle but don't expose
+          // it as authorized. The "Set project root" button stays unset.
+          projectDirHandle = dir;
+        }
+      }
     } catch (e) {
       console.warn("Directory handle restore skipped:", e);
     }
